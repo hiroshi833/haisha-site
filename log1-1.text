@@ -1,0 +1,69 @@
+中央揃え
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>配車サイト</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      display: flex;             /* 中央配置のためにフレックスを使用 */
+      flex-direction: column;    /* 縦方向に積む */
+      align-items: center;       /* 横方向の中央揃え */
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 40px;
+      color: #333;
+      text-align: center;        /* テキスト自体も中央 */
+      margin-bottom: 30px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      width: 300px;              /* 画面幅に応じて調整可能 */
+      text-align: center;        /* 中のテキストやフォームも中央 */
+    }
+
+    select {
+      margin-left: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>配車サイト</h1>
+
+  <!-- 車の台数入力 -->
+  <div class="section">
+    <label for="carCount">車の台数を入力してください:
+      <select id="carCount">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- 女の子リスト -->
+  <div class="section">
+    <p>配車する女の子を選択してください:</p>
+    <label><input type="checkbox" value="A子" data-place="西院"> A子（西院）</label>
+    <label><input type="checkbox" value="B子" data-place="伏見"> B子（伏見）</label>
+    <label><input type="checkbox" value="C子" data-place="草津"> C子（草津）</label>
+  </div>
+
+</body>
+</html>

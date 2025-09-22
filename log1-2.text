@@ -34,9 +34,6 @@
   <label><input type="checkbox" value="A子" data-lat="35.0035510" data-lng="135.7319292"> A子（西院）</label>
   <label><input type="checkbox" value="B子" data-lat="34.9464393" data-lng="135.7612059"> B子（伏見）</label>
   <label><input type="checkbox" value="C子" data-lat="35.0181831" data-lng="135.9687904"> C子（草津）</label>
-  <label><input type="checkbox" value="D子" data-lat="34.9793651" data-lng="135.7037059"> D子（桂）　</label>
-  <label><input type="checkbox" value="E子" data-lat="35.0025791" data-lng="135.9507197"> E子（南草津）</label>
-  <label><input type="checkbox" value="F子" data-lat="35.0511147" data-lng="135.9945484"> F子（守山）</label>
 </div>
 
 <div class="section">
@@ -49,71 +46,51 @@
 // 拠点の緯度経度
 const base = { lat: 35.0044801, lng: 135.7736121 };
 
-// 緯度経度から距離計算（簡易的にユークリッド距離）
-function distance(a, b) {
-  const dx = a.lat - b.lat;
-  const dy = a.lng - b.lng;
-  return Math.sqrt(dx*dx + dy*dy);
-}
-
-// K-meansクラスタリング（シンプル版）
-function kMeans(points, k, maxIter=10) {
-  // 初期中心：拠点を基準にランダムに選択
-  let centroids = [];
-  for (let i=0; i<k; i++) {
-    centroids.push(points[Math.floor(Math.random()*points.length)]);
-  }
-
-  let clusters = [];
-  for (let iter=0; iter<maxIter; iter++) {
-    // クラスタ初期化
-    clusters = Array.from({length:k}, ()=>[]);
-    // 割り当て
-    for (const p of points) {
-      let minDist = Infinity;
-      let clusterIndex = 0;
-      centroids.forEach((c, idx)=>{
-        const d = distance(p, c);
-        if(d < minDist){ minDist=d; clusterIndex=idx; }
-      });
-      clusters[clusterIndex].push(p);
-    }
-    // 中心を更新
-    centroids = clusters.map(cl=>{
-      if(cl.length===0) return {lat:0,lng:0};
-      const lat = cl.reduce((sum,p)=>sum+p.lat,0)/cl.length;
-      const lng = cl.reduce((sum,p)=>sum+p.lng,0)/cl.length;
-      return {lat,lng};
-    });
-  }
-  return clusters;
+// 緯度経度から距離計算（Haversine）
+function getDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // km
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
 function assignCars() {
   const carCount = parseInt(document.getElementById("carCount").value);
   const checked = Array.from(document.querySelectorAll("input[type=checkbox]:checked"));
 
-  if(checked.length===0){
+  if (checked.length === 0) {
     alert("女の子を選択してください");
     return;
   }
 
-  // 女の子のデータ
-  const girls = checked.map(cb=>({
+  // 女の子のデータに距離を追加
+  const girls = checked.map(cb => ({
     name: cb.value,
     lat: parseFloat(cb.dataset.lat),
-    lng: parseFloat(cb.dataset.lng)
+    lng: parseFloat(cb.dataset.lng),
+    distance: getDistance(base.lat, base.lng, parseFloat(cb.dataset.lat), parseFloat(cb.dataset.lng))
   }));
 
-  // k-meansでクラスタリング
-  const clusters = kMeans(girls, carCount);
+  // 距離順にソート（近い順）
+  girls.sort((a,b) => a.distance - b.distance);
 
-  // 1台に最大3人までに制限
-  const cars = clusters.map(cl=>cl.slice(0,3).map(p=>p.name));
+  // 車ごとに割り当て（最大3人）
+  const cars = [];
+  for (let i=0; i<carCount; i++) cars.push([]);
+
+  let i = 0;
+  for (const g of girls) {
+    cars[i].push(g.name);
+    i = (i+1) % carCount;
+    // 1台につき最大3人
+    if (cars[i].length >= 3) i = (i+1) % carCount;
+  }
 
   // 結果表示
   let html = "<h3>配車結果</h3>";
-  cars.forEach((car, idx)=>{
+  cars.forEach((car, idx) => {
     html += `<p>車${idx+1}: ${car.join(", ") || "なし"}</p>`;
   });
   document.getElementById("result").innerHTML = html;
